@@ -53,3 +53,7 @@ gui/build_bridge.sh              # 実機との橋渡し fr3_bridge をビルド
 | `docs/` | 説明 |
 | `logs/` | 実行のログ(Git には含めない) |
 | `vendor/` | メーカーの公開物(setup_vendor.sh が取得。Git には含めない) |
+
+## ライセンス
+このリポジトリのコード・文書は [MIT License](LICENSE)。
+`scripts/setup_vendor.sh` が取ってくるメーカー(Fairino)のファイル(`vendor/`、`gui/lib/`、`ros_ws/src/fairino3_v6_moveit2_config/`)は対象外で、その扱いはメーカーに従う。
