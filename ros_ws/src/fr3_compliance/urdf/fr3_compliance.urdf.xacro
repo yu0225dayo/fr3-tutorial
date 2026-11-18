@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!-- FR3 + 偽のハードウェア(mock) + 偽の力覚センサ(ft_sensor)。
+     力覚センサの値は、mock_sensor_commands で外から書き込める（= 「押した力」を自分で与える）。 -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="fairino3_v6_robot">
+  <xacro:arg name="initial_positions_file" default=""/>
+  <xacro:include filename="$(find fairino_description)/urdf/fairino3_v6.urdf"/>
+
+  <xacro:property name="init_file" value="$(arg initial_positions_file)"/>
+  <xacro:property name="initial_positions" value="${xacro.load_yaml(init_file)['initial_positions']}"/>
+
+  <ros2_control name="FakeSystem" type="system">
+    <hardware>
+      <plugin>mock_components/GenericSystem</plugin>
+      <param name="mock_sensor_commands">true</param>
+    </hardware>
+    <xacro:macro name="arm_joint" params="j">
+      <joint name="${j}">
+        <command_interface name="position"/>
+        <state_interface name="position">
+          <param name="initial_value">${initial_positions[j]}</param>
+        </state_interface>
+      </joint>
+    </xacro:macro>
+    <xacro:arm_joint j="j1"/><xacro:arm_joint j="j2"/><xacro:arm_joint j="j3"/>
+    <xacro:arm_joint j="j4"/><xacro:arm_joint j="j5"/><xacro:arm_joint j="j6"/>
+    <sensor name="ft_sensor">
+      <state_interface name="force.x"/><state_interface name="force.y"/><state_interface name="force.z"/>
+      <state_interface name="torque.x"/><state_interface name="torque.y"/><state_interface name="torque.z"/>
+    </sensor>
+  </ros2_control>
+</robot>

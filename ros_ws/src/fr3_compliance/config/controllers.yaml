@@ -1,0 +1,56 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+    fake_ft_command:
+      type: forward_command_controller/MultiInterfaceForwardCommandController
+    admittance_controller:
+      type: admittance_controller/AdmittanceController
+    forward_position_controller:
+      type: forward_command_controller/ForwardCommandController
+
+# 偽の力覚センサに値を書き込む。トピック /fake_ft_command/commands に [fx fy fz tx ty tz] を送る
+fake_ft_command:
+  ros__parameters:
+    joint: ft_sensor
+    interface_names: [force.x, force.y, force.z, torque.x, torque.y, torque.z]
+
+# 関節モード（link_compliance.py が計算した関節角をそのまま mock に渡す）
+forward_position_controller:
+  ros__parameters:
+    joints: [j1, j2, j3, j4, j5, j6]
+    interface_name: position
+
+admittance_controller:
+  ros__parameters:
+    joints: [j1, j2, j3, j4, j5, j6]
+    command_interfaces: [position]
+    state_interfaces: [position]
+    chainable_command_interfaces: [position]
+    ft_sensor:
+      name: ft_sensor
+      frame: {id: wrist3_link}
+      filter_coefficient: 0.5
+    control:
+      frame: {id: wrist3_link}
+    fixed_world_frame:
+      frame: {id: base_link}
+    gravity_compensation:
+      frame: {id: wrist3_link}
+      CoG: {pos: [0.0, 0.0, 0.0], force: 0.0}
+    kinematics:
+      plugin_name: kinematics_interface_kdl/KinematicsInterfaceKDL
+      plugin_package: kinematics_interface
+      base: base_link
+      tip: wrist3_link
+      alpha: 0.0005
+    admittance:
+      selected_axes: [true, true, true, true, true, true]
+      # 手先の「仮想のばね・ダンパ・質量」。質量 [kg, kg·m²]、剛性 [N/m, Nm/rad]、減衰比(1.0 = 臨界減衰)
+      mass: [1.0, 1.0, 1.0, 0.1, 0.1, 0.1]
+      stiffness: [200.0, 200.0, 200.0, 20.0, 20.0, 20.0]
+      # 大きいほど、離したあとにゆっくり戻る。3.0 で約 1.7 秒、6.0 で約 3.5 秒（1.0 は約 0.5 秒）。
+      # 注意: 10.0 は、100Hz の離散計算で発散した（値が壊れる）ので使わない。6.0 までを確認済み。
+      damping_ratio: [3.0, 3.0, 3.0, 3.0, 3.0, 3.0]
+    enable_parameter_update_without_reactivation: true

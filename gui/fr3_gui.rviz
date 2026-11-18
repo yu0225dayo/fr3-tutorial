@@ -1,0 +1,62 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Arm(GUI)
+      Topic:
+        Value: /gui_arm
+      Value: true
+    - Class: rviz_default_plugins/RobotModel
+      Name: RobotModel
+      Description Topic:
+        Value: /robot_description
+      Value: false
+    - Class: rviz_default_plugins/RobotModel
+      Name: 初期姿勢(init_pose)
+      Alpha: 0.3
+      Description Topic:
+        Value: /home/robot_description
+      TF Prefix: home
+      Value: false
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Zones/Target
+      Topic:
+        Value: /gui_markers
+      Value: true
+    - Class: rviz_default_plugins/InteractiveMarkers
+      Name: Target (drag)
+      Interactive Markers Namespace: /fr3_target
+      Show Axes: false
+      Show Descriptions: false
+      Show Visual Aids: true
+      Value: true
+  Global Options:
+    Fixed Frame: base_link
+  # マウス操作はツールが受け持つ(ツールが無いと視点を動かせない)。Interact で、視点の操作と目標の球のドラッグの両方ができる
+  Tools:
+    - Class: rviz_default_plugins/Interact
+      Hide Inactive Objects: true
+    - Class: rviz_default_plugins/MoveCamera
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 2.4
+      Focal Point: {X: -0.2, Y: 0.0, Z: 0.45}
+      Pitch: 0.4
+      Yaw: 0.9
+    Saved:
+      - Class: rviz_default_plugins/TopDownOrtho
+        Name: 真上から(+X が上)
+        Angle: 0
+        Scale: 250
+        X: 0
+        Y: 0
+        Target Frame: base_link

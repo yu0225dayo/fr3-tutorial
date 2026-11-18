@@ -1,0 +1,74 @@
+[
+  {
+    "name": "x_positive",
+    "min": [
+      0,
+      -1000,
+      -1000
+    ],
+    "max": [
+      1000,
+      1000,
+      1000
+    ],
+    "enabled": true,
+    "target": "tcp",
+    "wall": "x_min",
+    "wall_mm": 10,
+    "_note": "判定は手先が x 0〜1000 mm の箱に入ったら(=x>0)。RViz の表示だけを x=0〜10 mm の壁にする"
+  },
+  {
+    "name": "wall_zm1",
+    "min": [
+      -2000.0,
+      -2000.0,
+      -2000.0
+    ],
+    "max": [
+      2000.0,
+      2000.0,
+      215.8
+    ],
+    "enabled": true,
+    "target": "tcp",
+    "wall": "z_max",
+    "wall_mm": 10,
+    "_note": "手先の位置から作った壁: z ≦ 216 mm を禁止"
+  },
+  {
+    "name": "wall_ym1",
+    "min": [
+      -2000.0,
+      -2000.0,
+      -2000.0
+    ],
+    "max": [
+      2000.0,
+      -201.0,
+      2000.0
+    ],
+    "enabled": true,
+    "target": "tcp",
+    "wall": "y_max",
+    "wall_mm": 10,
+    "_note": "手先の位置から作った壁: y ≦ -201 mm を禁止"
+  },
+  {
+    "name": "wall_yp1",
+    "min": [
+      -2000.0,
+      281.9,
+      -2000.0
+    ],
+    "max": [
+      2000.0,
+      2000.0,
+      2000.0
+    ],
+    "enabled": true,
+    "target": "tcp",
+    "wall": "y_min",
+    "wall_mm": 10,
+    "_note": "手先の位置から作った壁: y ≧ 282 mm を禁止"
+  }
+]

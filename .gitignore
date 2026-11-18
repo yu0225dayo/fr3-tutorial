@@ -1,0 +1,16 @@
+# ログ・ビルド成果物・この PC 固有のリンク
+logs/*
+!logs/.gitkeep
+ros_ws/build/
+ros_ws/install/
+ros_ws/log/
+__pycache__/
+*.pyc
+gui/fr3_bridge
+docs/vendor_frcobot_ros2
+docker/build.log
+
+# メーカー(Fairino)のファイル。scripts/setup_vendor.sh が公式から取ってきて置く(ライセンス未表示のため、リポジトリに含めない)
+vendor/
+gui/lib/
+ros_ws/src/fairino3_v6_moveit2_config/

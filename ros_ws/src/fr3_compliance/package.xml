@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>fr3_compliance</name>
+  <version>0.1.0</version>
+  <description>FR3 のコンプライアンス（アドミタンス）制御を、偽のハードウェアと偽の力で RViz 上で確認するデモ</description>
+  <maintainer email="131845541+yu0225dayo@users.noreply.github.com">yu0225dayo</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>fairino_description</exec_depend>
+  <exec_depend>admittance_controller</exec_depend>
+  <exec_depend>kinematics_interface_kdl</exec_depend>
+  <exec_depend>ros2_control</exec_depend>
+  <exec_depend>ros2_controllers</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>xacro</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

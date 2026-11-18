@@ -1,0 +1,128 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>FR3 操作 GUI</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--fg:#1c2127;--mut:#667;--bd:#d5d9e0;--ok:#1a7f37;--warn:#b35900;--bad:#c62828;--acc:#1f5fbf}
+@media(prefers-color-scheme:dark){:root{--bg:#14171c;--card:#1d2128;--fg:#e6e9ee;--mut:#9aa4b2;--bd:#343b46;--ok:#4cc26a;--warn:#f0a040;--bad:#ff6b6b;--acc:#6aa5ff}}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,sans-serif}
+header{padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--bd);background:var(--card)}
+h1{font-size:18px;margin:0}
+main{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px;padding:12px 16px}
+section{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:12px}
+h2{font-size:15px;margin:0 0 8px}
+.badge{padding:2px 10px;border-radius:12px;font-weight:600;font-size:13px;border:1px solid currentColor}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}.mut{color:var(--mut)}
+table{border-collapse:collapse;width:100%}td,th{padding:3px 4px;text-align:right}th:first-child,td:first-child{text-align:left}
+input[type=number],input[type=text],select{width:5.5em;padding:3px;background:var(--bg);color:var(--fg);border:1px solid var(--bd);border-radius:4px;text-align:right}
+input[type=text]{width:9em;text-align:left}
+button{padding:6px 12px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--fg);cursor:pointer;font-size:14px}
+button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
+button:disabled{opacity:.45;cursor:not-allowed}
+#stop{background:var(--bad);color:#fff;border-color:var(--bad);font-weight:700;font-size:20px;padding:12px 28px}
+#msg{min-height:1.5em;padding:6px 16px;white-space:pre-wrap}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.tabs button.on{background:var(--acc);color:#fff}
+</style>
+<header>
+ <h1>FR3 操作 GUI</h1>
+ <span id=b_conn class="badge mut">未接続</span>
+ <span id=b_mode class="badge mut">-</span>
+ <span id=b_run class="badge mut">-</span>
+ <span id=b_imp class="badge mut">インピーダンス: OFF</span>
+ <span style="flex:1"></span>
+ <button id=stop onclick="stopAll()">■ 停止</button>
+</header>
+<div id=msg class=mut>接続先を選んで「接続」を押してください。</div>
+<main>
+<section>
+ <h2>① 接続</h2>
+ <div class=row>
+  <label><input type=radio name=be value=sim checked> シミュレーション(何も送らない)</label>
+  <label><input type=radio name=be value=real> 実機</label>
+ </div>
+ <div class=row>IP <input id=ip type=text value="192.168.58.2"> <button class=p onclick=connect()>接続</button> <button onclick=disconnect()>切断</button></div>
+ <div class="row mut" id=exec_note></div>
+ <div class=row><label><input type=checkbox id=safety onchange=setSafety()> <b>非常停止の場所を確認し、周囲に人・物がない</b>(実機で必要)</label></div>
+ <div class=row><button onclick="post('/api/enable',{on:1})">上使能</button><button onclick="post('/api/enable',{on:0})">下使能</button><button onclick="post('/api/reset',{})">エラーリセット</button></div>
+ <p class=mut>実機はまず「ドライラン」で起動します(動作は送らず、内容だけ表示)。送るには、サーバを <code>--execute</code> で起動し直します。</p>
+</section>
+<section>
+ <h2>② 現在の状態</h2>
+ <table id=st><tr><th>関節<th>角度[deg]<th>トルク[Nm]<th>範囲</tr></table>
+ <div class=row>手先: <span id=tcp class=mut>-</span></div>
+ <div class=row>エラー: <span id=err class=mut>-</span> 　動作: <span id=done class=mut>-</span></div>
+</section>
+<section>
+ <h2>③ 目的地へ移動</h2>
+ <div class="row tabs"><button id=t_j class=on onclick="tab('joint')">関節角度</button><button id=t_c onclick="tab('tcp')">手先位置(直線)</button></div>
+ <div id=p_joint><table id=gj><tr><th>関節<th>目標[deg]</tr></table></div>
+ <div id=p_tcp style="display:none"><table id=gc><tr><th>軸<th>目標</tr></table><p class=mut>x,y,z は mm、rx,ry,rz は deg(ベース座標系)</p></div>
+ <div class=row>速度 <input id=vel type=number step=1 min=1> % (上限 <span id=velmax></span>%)
+  <button onclick=useCurrent()>現在値を入れる</button> <button onclick=useHome()>初期姿勢</button></div>
+ <div class=row><button class=p onclick=move()>移動</button></div>
+</section>
+<section>
+ <h2>④ インピーダンス制御</h2>
+ <div class=row>空間 <select id=ws onchange=fillImp()><option value=0>関節空間</option><option value=1>直交空間(手先)</option></select></div>
+ <table id=ip_t><tr><th><th>1<th>2<th>3<th>4<th>5<th>6</tr></table>
+ <div class=row>最大 速度 <input id=mv type=number> 加速度 <input id=mva type=number> 角速度 <input id=mw type=number> 角加速度 <input id=mwa type=number></div>
+ <div class=row><button class=p onclick="imp(1)">開始</button><button onclick="imp(0)">停止</button></div>
+ <p class=mut>外力が閾値を超えると、その方向に腕が譲り、閾値を下回ると元の軌道に戻ります(マニュアル 9.33)。事前に衝突レベルの設定が必要です。シミュレーションでは、設定を保持するだけです。</p>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);let INFO,tabNow='joint',S={};
+const J=[1,2,3,4,5,6],C=['x','y','z','rx','ry','rz'];
+const post=async(u,b)=>{const r=await(await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)})).json();
+ show(r);return r};
+function show(r){if(!r)return;const m=r.msg||(r.ok?'OK':'失敗 (err='+r.err+')');$('msg').textContent=(r.dry_run?'[ドライラン] ':'')+m;$('msg').className=r.ok===false?'bad':(r.dry_run?'warn':'ok')}
+const num=(id,v,s)=>`<input type=number id=${id} step=${s||0.1} value=${v}>`;
+async function init(){INFO=await(await fetch('/api/info')).json();
+ const st=$('st'),gj=$('gj'),gc=$('gc');
+ J.forEach((j,i)=>{st.insertRow().innerHTML=`<td>j${j}<td id=q${i}>-<td id=tq${i}>-<td class=mut>${INFO.j_min[i].toFixed(0)}〜${INFO.j_max[i].toFixed(0)}`;
+  gj.insertRow().innerHTML=`<td>j${j}<td>${num('gj'+i,INFO.home[i])}`});
+ C.forEach((c,i)=>gc.insertRow().innerHTML=`<td>${c}<td>${num('gc'+i,0)}`);
+ $('vel').value=INFO.limits.default_vel_percent;$('vel').max=INFO.limits.max_vel_percent;$('velmax').textContent=INFO.limits.max_vel_percent;
+ $('exec_note').innerHTML=INFO.execute?'<b class=bad>サーバは --execute: 実機に動作を送ります</b>':'実機への送信: 無効(ドライラン)';
+ fillImp();tick()}
+function fillImp(){const ws=+$('ws').value,I=INFO.limits.impedance,t=$('ip_t');
+ const th=ws==0?I.joint_threshold_nm.min:I.cart_threshold.min;
+ const m=[.04,.04,.04,.01,.01,.01],b=[.1,.1,.1,.08,.08,.08];
+ t.innerHTML='<tr><th><th>1<th>2<th>3<th>4<th>5<th>6</tr>';
+ [['力の閾値 '+(ws==0?'[Nm]':'[N / Nm]'),'th',th],['質量 m','m',m],['減衰 b','b',b],['剛性 k(0のみ)','k',[0,0,0,0,0,0]]].forEach(([n,k,v])=>
+  t.insertRow().innerHTML=`<td>${n}`+v.map((x,i)=>`<td>${num('i'+k+i,x,k=='th'?1:0.01)}`).join(''));
+ const D=I.slow_defaults; // 既定はゆっくりした値(config/limits.json)
+ if(ws==0){$('mv').value=D.joint_max_v_deg_s;$('mva').value=D.joint_max_va_deg_s2;$('mw').value=D.joint_max_v_deg_s;$('mwa').value=D.joint_max_va_deg_s2}
+ else{$('mv').value=D.max_v_mm_s;$('mva').value=D.max_va_mm_s2;$('mw').value=D.max_w_deg_s;$('mwa').value=D.max_wa_deg_s2}}
+const arr=p=>J.map((_,i)=>+$(p+i).value);
+function tab(t){tabNow=t;$('p_joint').style.display=t=='joint'?'':'none';$('p_tcp').style.display=t=='tcp'?'':'none';$('t_j').className=t=='joint'?'on':'';$('t_c').className=t=='tcp'?'on':''}
+function useCurrent(){if(!S.joints)return;S.joints.forEach((v,i)=>$('gj'+i).value=v.toFixed(2));S.tcp.forEach((v,i)=>$('gc'+i).value=v.toFixed(2))}
+function useHome(){INFO.home.forEach((v,i)=>$('gj'+i).value=v);tab('joint')}
+async function connect(){const be=document.querySelector('input[name=be]:checked').value;
+ $('msg').textContent='接続中...';show(await post('/api/connect',{backend:be,ip:$('ip').value}))}
+async function disconnect(){show(await post('/api/disconnect',{}))}
+async function setSafety(){await post('/api/safety',{ok:$('safety').checked})}
+async function stopAll(){show(await post('/api/stop',{}))}
+async function move(){
+ const real=S.backend=='real',vel=+$('vel').value;
+ const body=tabNow=='joint'?{kind:'joint',joints:arr('gj'),vel}:{kind:'tcp',pose:C.map((_,i)=>+$('gc'+i).value),vel};
+ const desc=tabNow=='joint'?'関節 ['+body.joints.join(', ')+'] deg':'手先 ['+body.pose.join(', ')+']';
+ if(real&&!S.dry&&!confirm(`実機を動かします。\n目標: ${desc}\n速度: ${vel}%\n\n非常停止に手が届く状態ですか?`))return;
+ await post('/api/move',body)}
+async function imp(on){
+ const body={on,ws:+$('ws').value,threshold:arr('ith'),m:arr('im'),b:arr('ib'),k:arr('ik'),max_v:+$('mv').value,max_va:+$('mva').value,max_w:+$('mw').value,max_wa:+$('mwa').value};
+ if(on&&S.backend=='real'&&!S.dry){if(!confirm('実機でインピーダンス制御を開始します。\n外力で腕が動きます。非常停止に手が届き、周囲は安全ですか?'))return;body.confirm=true}
+ await post('/api/impedance',body)}
+const badge=(id,t,c)=>{$(id).textContent=t;$(id).className='badge '+c};
+async function tick(){try{S=await(await fetch('/api/state')).json();
+ badge('b_conn',S.connected?'接続中':'未接続',S.connected?'ok':'mut');
+ badge('b_mode',S.connected?(S.backend=='sim'?'シミュレーション':(S.dry?'実機: ドライラン':'実機: 実行モード')):'-',S.backend=='real'&&S.connected?(S.dry?'warn':'bad'):'mut');
+ badge('b_run',S.connected?(S.done?'停止中':'動作中'):'-',S.connected?(S.done?'ok':'warn'):'mut');
+ badge('b_imp','インピーダンス: '+(S.impedance?'ON':'OFF'),S.impedance?'warn':'mut');
+ if(S.joints){S.joints.forEach((v,i)=>{$('q'+i).textContent=v.toFixed(2);$('tq'+i).textContent=(S.torque||[])[i]?.toFixed(2)??'-'});
+  $('tcp').textContent=S.tcp.map((v,i)=>C[i]+'='+v.toFixed(1)).join('  ');
+  $('err').textContent=S.main_err||S.sub_err?`main=${S.main_err} sub=${S.sub_err}`:'なし';$('err').className=S.main_err?'bad':'ok';
+  $('done').textContent=S.done?'停止':'動作中'}
+ if(!S.connected){$('safety').checked=false}
+}catch(e){}setTimeout(tick,300)}
+init();
+</script>
