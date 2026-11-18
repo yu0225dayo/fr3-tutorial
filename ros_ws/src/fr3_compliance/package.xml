@@ -4,7 +4,7 @@
   <version>0.1.0</version>
   <description>FR3 のコンプライアンス（アドミタンス）制御を、偽のハードウェアと偽の力で RViz 上で確認するデモ</description>
   <maintainer email="131845541+yu0225dayo@users.noreply.github.com">yu0225dayo</maintainer>
-  <license>Apache-2.0</license>
+  <license>MIT</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
   <exec_depend>fairino_description</exec_depend>
   <exec_depend>admittance_controller</exec_depend>
